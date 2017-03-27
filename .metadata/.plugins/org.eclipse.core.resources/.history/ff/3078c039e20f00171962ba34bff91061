@@ -1,0 +1,145 @@
+package br.org.energia.contadorhoras.ContadorHoras;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+
+import org.openqa.selenium.WebDriver;
+
+public class EtapasTeste {
+
+	Usuario usr = new Usuario();
+
+	private static String user = null;
+	private static String password = null;
+	private List<Atividade> lista = new ArrayList<Atividade>();
+//	private List<Atividade> listaDet = new ArrayList<Atividade>();
+
+	public void teste(WebDriver driver) throws InterruptedException, ParseException, IOException {
+		// abrir browser e carregar pagina
+		AbreBrowser browser = new AbreBrowser();
+		browser.abrirBrowser(driver);
+
+		usr = TelaLogin.montarTelaLogin();
+
+		Thread.sleep(20000);
+
+		user = usr.getUsuario();
+		password = usr.getSenha();
+
+		try {
+			if (!user.equals(null) && !password.equals(null)) {
+				// efetuar login
+				Login log = new Login();
+				log.logar(user, password, driver);
+
+				Thread.sleep(3000);
+
+				JOptionPane.showMessageDialog(null, "Obtendo suas horas, por favor aguarde!!!");
+				JFrame frame = new JFrame("Progresso");
+				frame.setSize(300, 120);
+				frame.setLocationRelativeTo(null);
+				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+				JPanel panel = new JPanel();
+				frame.add(panel);
+
+				frame.setVisible(true);
+				
+				panel.setLayout(null);
+
+				JLabel tarefasLabel = new JLabel("Retornando ao mês anterior...");
+				tarefasLabel.setBounds(10, 10, 260, 25);
+				panel.add(tarefasLabel);
+				
+				int min = 0;
+				int max = 100;
+				
+				JProgressBar progressBar = new JProgressBar(min, max);
+				progressBar.setBounds(10, 40, 260, 25);
+				progressBar.setIndeterminate(true);
+				panel.add(progressBar);
+
+				// executar teste
+				ConsultarMeses testar = new ConsultarMeses();
+				testar.listarMesAnterior(driver);
+				
+				tarefasLabel.setText("Retornado ao mês anterior com sucesso");
+				panel.add(tarefasLabel);
+
+				Thread.sleep(3000);
+				
+				tarefasLabel.setText("Obtendo atividades...");
+				panel.add(tarefasLabel);
+
+				testar.obterAtividadeEHoras(driver);
+				
+				tarefasLabel.setText("Atividades obtidas com sucesso");
+				panel.add(tarefasLabel);
+
+				Thread.sleep(3000);
+				
+				tarefasLabel.setText("Retornando ao mês atual...");
+				panel.add(tarefasLabel);
+
+				testar.listarMesAtual(driver);
+				
+				tarefasLabel.setText("Retornado ao mês atual com sucesso");
+				panel.add(tarefasLabel);
+
+				Thread.sleep(3000);
+				
+				tarefasLabel.setText("Obtendo atividades...");
+				panel.add(tarefasLabel);
+
+				testar.obterAtividadeEHoras(driver);
+				
+				tarefasLabel.setText("Atividades obtidas com sucesso");
+				panel.add(tarefasLabel);
+
+				Thread.sleep(3000);
+
+				lista.addAll(testar.listaResultado);
+//				listaDet.addAll(testar.listaDetalhe);
+
+				Thread.sleep(3000);
+				
+				tarefasLabel.setText("Gerando arquivo Excel...");
+				panel.add(tarefasLabel);
+
+				CriarExcel criaXls = new CriarExcel();
+				criaXls.criarArqExcel(lista);
+//				criaXls.criarExcelDetalhes(listaDet);
+				
+				JOptionPane.showMessageDialog(null, "Arquivo criado no caminho C:/Temp/Contador_de_Horas.xls");
+				
+				frame.dispose();
+
+				Thread.sleep(3000);
+
+				// Logout
+
+				Logout sair = new Logout();
+				sair.exit(driver);
+
+				Runtime.getRuntime().exec("finalizaProcesso.bat");
+				
+				System.exit(0);
+				
+			}
+		} catch (NullPointerException npe) {
+
+			JOptionPane.showMessageDialog(null, "Tempo de Login excedido, favor executar novamente!!!");
+
+			System.exit(0);
+		}
+	}
+
+}
