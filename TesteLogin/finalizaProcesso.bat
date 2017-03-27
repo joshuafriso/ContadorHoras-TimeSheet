@@ -1,1 +1,0 @@
-tskill phantomjs
